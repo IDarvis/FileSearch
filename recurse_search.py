@@ -5,6 +5,12 @@ import re
 import matplotlib.pyplot as plt
 import numpy as np
 
+'''
+Author:     Daryl Pham 
+Date:       2018/09/05
+'''
+
+
 ''' 
  Search function that recursively traverses the root_dir and sub_dirs and counts the number 
  of files that contain a match to the provided keyword/pattern.
@@ -17,6 +23,8 @@ def search(directory, keyword, sub_dir = ''):
     try:
         #If the directory exists get a list of items in it, else raise exception
         if not (path.lexists(directory)):
+            raise Exception("Error: " + directory + " does not exist.")
+        if not path.isdir(directory):
             raise Exception("Error: " + directory + " is not a valid directory.")
         
         
@@ -61,7 +69,7 @@ def merge(a, b):
 def plot(result):
     figure = plt.figure("Bar")
     ax = figure.add_subplot(1,1,1)
-    ax.set(xlabel = "Sub-Directory", ylabel = "Count", title = "Number of matched files in each Dir/Subdir")
+    ax.set(xlabel = "Sub-Directory", ylabel = "Count", title = ("Number of matched files in Dir/Sub-Dir of " + sys.argv[1]))
     x = sorted(result.keys())
     y = [result[i] for i in x]
     ax.set_yticks(np.arange(min(y), max(y)+1, 1))
@@ -87,7 +95,7 @@ def main():
             raise Exception("Error: Invalid number of Arguments - requires directory and keyword.")
 
         result = search(sys.argv[1], sys.argv[2])
-        print_dict(result)
+        print(result)
         plot(result)
     
     except Exception as e:
