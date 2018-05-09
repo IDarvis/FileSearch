@@ -3,33 +3,33 @@ import os
 import os.path as path
 import re
 import matplotlib.pyplot as plt
+import numpy as np
 
 ''' 
  Search function that recursively traverses the root_dir and sub_dirs and counts the number 
  of files that contain a match to the provided keyword/pattern.
 ''' 
-def search(directory, keyword):
+def search(directory, keyword, sub_dir = ''):
 
-    dir_list, result = None,  {directory: 0}
-    base_dir = path.abspath(directory) + "\\"
     pattern = re.compile(keyword)
-
+    result = {sub_dir : 0} if sub_dir != '' else {'root_dir' : 0}
+    
     try:
         #If the directory exists get a list of items in it, else raise exception
-        if (path.lexists(directory)):
-            dir_list = [base_dir + x for x in os.listdir(directory)]
-        else:
+        if not (path.lexists(directory)):
             raise Exception("Error: " + directory + " is not a valid directory.")
         
         
         #Iterate through each item in the directory and process based on whether
         #it is a file or a sub-directory
-        for item in dir_list:
-            if path.isdir(item):
-                result = merge(result, search(item, keyword))
-            else:
-                if re.search(pattern, item):
-                    result[directory] = result[directory] + 1
+        for item in os.listdir(directory):
+            if path.isdir(path.join(directory,item)):
+                result = merge(result, search(path.join(directory,item), keyword, path.join(sub_dir, item)))
+            elif re.search(pattern, item):
+                if sub_dir == '':
+                    result['root_dir'] = result['root_dir'] + 1
+                else:
+                    result[sub_dir] = result[sub_dir] + 1
         return result
 
     #If exceptions related to directory access is found, return to skip that 
@@ -61,24 +61,39 @@ def merge(a, b):
 def plot(result):
     figure = plt.figure("Bar")
     ax = figure.add_subplot(1,1,1)
-    ax.set(xlabel = "Directory", ylabel = "Count", title = "Number of matched files in each Dir/Subdir")
-    ax.bar(result.keys(), result.values())
+    ax.set(xlabel = "Sub-Directory", ylabel = "Count", title = "Number of matched files in each Dir/Subdir")
+    x = sorted(result.keys())
+    y = [result[i] for i in x]
+    ax.set_yticks(np.arange(min(y), max(y)+1, 1))
+    ax.bar(x, y)
     plt.show()
 
 '''
- Where the Script begins
+ Function to print out dictionary with corresponding values
 '''
-try:
+def print_dict(dict):
+    for key in sorted(dict.keys()):
+        print(key + ": " + str(dict[key]))
 
-    #Check the input and raise exception if there are any issues.  If not run Search, and then plot the results.
-    if len(sys.argv) != 3:
-        raise Exception("Error: Invalid number of Arguments - requires directory and keyword.")
 
-    result = search(sys.argv[1], sys.argv[2])
-    for key in sorted(result.keys()):
-        print(key + ": " + str(result[key]))
-    plot(result)
+'''
+ Main Script
+'''
+def main():
+    try:
 
-except Exception as e:
-    print(e)
-    sys.exit()
+        #Check the input and raise exception if there are any issues.  If not run Search, and then plot the results.
+        if len(sys.argv) != 3:
+            raise Exception("Error: Invalid number of Arguments - requires directory and keyword.")
+
+        result = search(sys.argv[1], sys.argv[2])
+        print_dict(result)
+        plot(result)
+    
+    except Exception as e:
+        print(e)
+        sys.exit()
+
+
+if __name__ == "__main__":
+    main()
